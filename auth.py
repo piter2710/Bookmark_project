@@ -5,9 +5,9 @@ from typing import List
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from .database import get_db
-from .schemas import UserCreate, TokenData
-
+from database import get_db
+from schemas import UserCreate, TokenData
+from models import Users, Bookmarks
 router = APIRouter()
 
 # Security configurations
@@ -16,7 +16,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # Security utilities
 def verify_password(plain_password, hashed_password):
@@ -61,15 +61,30 @@ def create_new_user(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@router.post("/auth/login")
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@router.post("/auth/login", summary="Create access token for user")
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(), 
+    db: Session = Depends(get_db)
+):
+    """
+    OAuth2 compatible token login, get an access token for future requests
+    """
     user = db.query(Users).filter(Users.username == form_data.username).first()
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     if not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.post("/auth/refresh")
 def refresh_access_token(token: str = Depends(oauth2_scheme)):

@@ -10,15 +10,12 @@ from schemas import UserCreate, TokenData
 from models import Users, Bookmarks
 router = APIRouter()
 
-# Security configurations
 SECRET_KEY = "your-secret"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-# Security utilities
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -51,8 +48,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-# Routes
-
 @router.post("/auth/register")
 def create_new_user(user: UserCreate, db: Session = Depends(get_db)):
     new_user = Users(username=user.username, email=user.email, hashed_password=get_password_hash(user.password))
@@ -66,9 +61,6 @@ async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), 
     db: Session = Depends(get_db)
 ):
-    """
-    OAuth2 compatible token login, get an access token for future requests
-    """
     user = db.query(Users).filter(Users.username == form_data.username).first()
     if not user:
         raise HTTPException(
@@ -84,8 +76,6 @@ async def login_for_access_token(
         )
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
-
-
 @router.post("/auth/refresh")
 def refresh_access_token(token: str = Depends(oauth2_scheme)):
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -94,3 +84,4 @@ def refresh_access_token(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=400, detail="Invalid token")
     access_token = create_access_token(data={"sub": username})
     return {"access_token": access_token, "token_type": "bearer"}
+

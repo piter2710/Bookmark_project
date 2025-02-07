@@ -3,14 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from database import engine, Base, get_db
 from auth import router
-
-# Create database tables
+from bookmarks import Brouter
 Base.metadata.create_all(bind=engine)
 
-# Initialize FastAPI app
 app = FastAPI()
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -20,3 +17,4 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(Brouter)

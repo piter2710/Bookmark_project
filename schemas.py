@@ -3,9 +3,6 @@ from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field, validator
 from uuid import UUID
 
-# ------------------------
-# User Schemas
-# ------------------------
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -29,10 +26,6 @@ class UserResponse(UserBase):
     class Config:
         orm_mode = True
 
-# ------------------------
-# Authentication Schemas
-# ------------------------
-
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -40,9 +33,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
 
-# ------------------------
-# Tag Schemas
-# ------------------------
 
 class TagBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=50)
@@ -61,9 +51,6 @@ class TagResponse(TagBase):
     class Config:
         orm_mode = True
 
-# ------------------------
-# Bookmark Schemas
-# ------------------------
 
 class BookmarkBase(BaseModel):
     url: str = Field(..., max_length=500)
@@ -91,9 +78,6 @@ class BookmarkResponse(BookmarkBase):
     class Config:
         orm_mode = True
 
-# ------------------------
-# Analytics Schemas
-# ------------------------
 
 class PopularBookmarkResponse(BaseModel):
     id: UUID
@@ -104,10 +88,6 @@ class PopularBookmarkResponse(BaseModel):
 class TagCloudResponse(BaseModel):
     name: str
     count: int
-
-# ------------------------
-# Admin Schemas
-# ------------------------
 
 class AdminUserResponse(UserResponse):
     bookmarks: List[BookmarkResponse]

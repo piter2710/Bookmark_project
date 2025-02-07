@@ -5,7 +5,6 @@ import nltk
 from nltk.corpus import stopwords
 import wikipedia
 
-# Download required NLTK resources
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('punkt_tab')
@@ -33,7 +32,6 @@ def extract_url_tags(url: str) -> list:
     return tags
 
 def extract_priority_terms(text: str) -> list:
-    """Extract acronyms, hyphenated terms, and technical phrases"""
     patterns = [
         r'\b[A-Z]{2,}\b',  # Acronyms like AI
         r'\b\d+[kmg]?b\b',  # Tech terms like 4K
@@ -46,32 +44,26 @@ def extract_priority_terms(text: str) -> list:
     ))
 
 def extract_keywords(text: str) -> list:
-    """Extract key phrases using RAKE with phrase focus"""
-    # Extract priority terms first
     priority_terms = extract_priority_terms(text)
     
-    # Use RAKE for general keyword extraction
     r = Rake(
         min_length=2,
         max_length=3,
         include_repeated_phrases=False
     )
     r.extract_keywords_from_text(text)
-    phrases = r.get_ranked_phrases()[:7]  # Get top 7 phrases
-    
-    # Filter and combine phrases
+    phrases = r.get_ranked_phrases()[:7] 
+
     valid_phrases = []
     for phrase in phrases:
-        if any(c.isupper() for c in phrase):  # Keep proper nouns
+        if any(c.isupper() for c in phrase):  
             valid_phrases.append(phrase)
-        elif len(phrase.split()) > 1:  # Multi-word phrases
+        elif len(phrase.split()) > 1:
             valid_phrases.append(phrase.replace(' ', '-'))
-    
-    # Combine priority terms and RAKE phrases
+
     return priority_terms + valid_phrases[:5]
 
 def get_wikipedia_tags(title: str, description: str) -> list:
-    """Get context-relevant Wikipedia entities"""
     wikipedia.set_lang('en')
     try:
         search_results = wikipedia.search(title)[:3]  # Top 3 results
@@ -97,7 +89,6 @@ def get_wikipedia_tags(title: str, description: str) -> list:
         return []
 
 def clean_tags(tags: list) -> list:
-    """Normalize and filter final tags"""
     # Filter criteria
     bad_patterns = {
         'test', 'report', 'hidden', 'secret', 'howto', 
@@ -113,7 +104,6 @@ def clean_tags(tags: list) -> list:
     ]
 
 def auto_tag_bookmark(url: str, title: str, description: str) -> list:
-    """Main tagging workflow"""
     url_tags = extract_url_tags(url)
     text = f"{title} {description}"
     tfidf_tags = extract_keywords(text)
